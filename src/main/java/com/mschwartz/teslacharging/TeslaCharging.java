@@ -30,6 +30,7 @@ import com.mschwartz.teslacharging.tesla.TeslaCharge;
 import com.mschwartz.teslacharging.tesla.TeslaConfiguration;
 import com.mschwartz.teslacharging.tesla.TeslaVehicle;
 import com.mschwartz.teslacharging.tesla.TeslaVehicle.ChargeState;
+import com.mschwartz.teslacharging.tesla.TeslaVehicle.DriveState;
 import com.mschwartz.teslacharging.web.AuthRestRequest;
 import com.mschwartz.teslacharging.web.RestRequest;
 
@@ -74,6 +75,7 @@ public class TeslaCharging {
 				.help("Calculates the charging amps based on the given power surplus in watts");
 		parser.addArgument("-f", "--propertyfile").type(String.class)
 				.help("name and location of the propertyfile. Default is app.properties");
+		parser.addArgument("-w", "--wakeup").type(String.class).help("Wakeup a sleeping tesla");
 
 		Namespace ns = null;
 		try {
@@ -175,8 +177,26 @@ public class TeslaCharging {
 				System.exit(1);
 			}
 		} else if (ns.getString("chargecalculation") != null) {
+			
+			DriveState driveState = teslaVehicle.getVehicleDriveState();
+			if (driveState != null && driveState.getLatitude() != null
+					&& driveState.getLongitude() != null) {
+				double distance = teslaVehicle.getHomePosition().distanceFrom(driveState.getLatitude(), driveState.getLongitude());
+				if (distance > 5) {
+					System.out.println("Car is more than 5 miles away from home.");
+					System.exit(1);
+				}
+			} else {
+				System.out.println("getting drive state failed");
+				System.exit(1);
+			}
+		
 			ChargeState chargeState = teslaVehicle.getVehicleChargeState();
 			if (chargeState != null) {
+				if (chargeState.getCharging_state().equals("Disconnected")) {
+					System.out.println("Car is disconnected.");
+					System.exit(1);
+				}
 				int power = ns.getInt("chargecalculation");
 				ChargeCalculation calculation = new ChargeCalculation(teslaCharge);
 				int watts = calculation.adaptCharging(chargeState, power);
@@ -184,6 +204,13 @@ public class TeslaCharging {
 			} else {
 				System.out.println("getting charge state failed");
 				System.exit(1);
+			}
+		} else if (ns.getString("wakeup") != null) {
+			boolean ok = teslaVehicle.wakeUpVehicle();
+			if (ok) {
+				System.out.println("Tesla is now awake");
+			} else {
+				System.out.println("Tesla is still sleeping");
 			}
 		}
 

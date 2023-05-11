@@ -25,10 +25,6 @@ public class ChargeCalculation {
 	 * @throws Exception
 	 */
 	public int adaptCharging(ChargeState chargeState, int powerSurplus) throws Exception {
-		if (chargeState.getCharging_state().equals("Disconnected")) {
-			logger.info("Car is disconnected.");
-			return 0;
-		}
 		// calculate the power surplus if the car is NOT charging
 		int powerOfCar = calculateCurrentPowerToCar(chargeState);
 		int powerSurplusWoCar = powerSurplus + powerOfCar;

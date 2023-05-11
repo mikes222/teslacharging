@@ -29,6 +29,10 @@ public class TeslaVehicle {
 
 	private VehicleLocation lastHome;
 
+	private VehicleData lastCache;
+
+	private long timestampCache;
+
 	// Vehicle location history
 	private CircularFifoQueue<VehicleLocation> vehicleLocationHistory = new CircularFifoQueue<VehicleLocation>(250);
 
@@ -46,6 +50,15 @@ public class TeslaVehicle {
 		}
 		if (vin == null || id == null || displayName == null)
 			getVehicleMatchForVIN(teslaConfiguration);
+		if (homeLatitude == null || homeLongitude == null) {
+			DriveState driveState = getVehicleDriveState();
+			if (driveState != null && driveState.getLatitude() != null && driveState.getLongitude() != null) {
+				homeLatitude = driveState.getLatitude();
+				homeLongitude = driveState.getLongitude();
+				teslaConfiguration.updateHomeLocation(homeLatitude, homeLongitude);
+			}
+		}
+
 	}
 
 	/**
@@ -97,6 +110,10 @@ public class TeslaVehicle {
 		return vehicleMatch;
 	}
 
+	public VehicleLocation getHomePosition() {
+		return new VehicleLocation(homeLatitude, homeLongitude);
+	}
+
 	/**
 	 * Get the full vehicle data set
 	 * 
@@ -105,10 +122,15 @@ public class TeslaVehicle {
 	 * @throws Exception
 	 */
 	public Vehicle getVehicleData() throws Exception {
+		if (timestampCache != 0 && System.currentTimeMillis() - timestampCache < 10000) {
+			return lastCache.getResponse();
+		}
 		VehicleData vehicleDataResponse = authRestRequest
 				.getJSON(TeslaConfiguration.apiBase + "/api/1/vehicles/" + id + "/vehicle_data", VehicleData.class);
 
 		if (vehicleDataResponse != null && vehicleDataResponse.getResponse() != null) {
+			lastCache = vehicleDataResponse;
+			timestampCache = System.currentTimeMillis();
 			return vehicleDataResponse.getResponse();
 		}
 
@@ -121,7 +143,7 @@ public class TeslaVehicle {
 	 * @param id ID of the vehicle to use in the wake_up request
 	 * @throws Exception
 	 */
-	private boolean wakeUpVehicle() throws Exception {
+	public boolean wakeUpVehicle() throws Exception {
 		logger.debug("Wake up, Tesla {}!", id);
 		VehicleData wakeResponse = authRestRequest
 				.postJson(TeslaConfiguration.apiBase + "/api/1/vehicles/" + id + "/wake_up", null, VehicleData.class);
@@ -165,7 +187,7 @@ public class TeslaVehicle {
 	 * @return Drive state response JSON object
 	 * @throws Exception
 	 */
-	private DriveState getVehicleDriveState() throws Exception {
+	public DriveState getVehicleDriveState() throws Exception {
 		Vehicle vehicleDataResponse = getVehicleData();
 		if (vehicleDataResponse != null && vehicleDataResponse.getDrive_state() != null) {
 			DriveState data = vehicleDataResponse.getDrive_state();
@@ -509,7 +531,7 @@ public class TeslaVehicle {
 	/////////////////////////////////////////////////////////////////////////
 
 	@Getter
-	class DriveState {
+	public class DriveState {
 
 		int gps_as_of;
 

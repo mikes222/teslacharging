@@ -103,7 +103,13 @@ public class TeslaConfiguration {
 		newTokens.put(ID_S, id_s);
 		newTokens.put(DISPLAY_NAME, displayName);
 		updateConfiguration(newTokens);
-
+	}
+	
+	public void updateHomeLocation(double latitude, double longitude) {
+		HashMap<String, Object> newTokens = new HashMap<String, Object>();
+		newTokens.put(HOME_LATITUDE, latitude);
+		newTokens.put(HOME_LONGITUDE, longitude);
+		updateConfiguration(newTokens);
 	}
 
 	private void openPropertiesFile() {
