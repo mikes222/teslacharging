@@ -48,64 +48,56 @@ public class TeslaConfiguration {
 	 * Store any updated configuration values in the properties file
 	 * 
 	 * @param configChanges HashMap of configuration keys and values to update
+	 * @throws IOException
 	 */
-	private void updateConfiguration(HashMap<String, Object> configChanges) {
+	private void updateConfiguration(HashMap<String, Object> configChanges) throws IOException {
 		logger.debug("Update configuration with {}", new JSONObject(configChanges).toString());
 		ArrayList<String> newLines = new ArrayList<String>();
 		Scanner scanner;
-		try {
-			scanner = new Scanner(new File(propertiesFile));
-			while (scanner.hasNextLine()) {
-				String line = scanner.nextLine().trim();
-				if (line.indexOf("=") > 0) {
-					String[] parts = line.split("=", 2);
-					String key = parts[0];
-					String value = parts[1];
-					if (configChanges.containsKey(key)) {
-						value = configChanges.get(key).toString();
-					}
-					line = key + "=" + value;
+		scanner = new Scanner(new File(propertiesFile));
+		while (scanner.hasNextLine()) {
+			String line = scanner.nextLine().trim();
+			if (line.indexOf("=") > 0) {
+				String[] parts = line.split("=", 2);
+				String key = parts[0];
+				String value = parts[1];
+				if (configChanges.containsKey(key)) {
+					value = configChanges.get(key).toString();
 				}
-				newLines.add(line);
+				line = key + "=" + value;
 			}
-			scanner.close();
-		} catch (Exception ex) {
-			logger.error("Configuration read/update exception: {}", ex);
+			newLines.add(line);
 		}
+		scanner.close();
 
 		if (newLines.size() > 0) {
-			BufferedWriter writer;
-			try {
-				writer = new BufferedWriter(new FileWriter(propertiesFile));
-				for (String line : newLines) {
-					writer.write(line + "\n");
-				}
-				writer.close();
-
-				File config = new File(propertiesFile);
-				lastConfigurationModification = config.lastModified();
-			} catch (Exception ex) {
-				logger.error("Configuration write exception: {}", ex);
+			BufferedWriter writer = new BufferedWriter(new FileWriter(propertiesFile));
+			for (String line : newLines) {
+				writer.write(line + "\n");
 			}
+			writer.close();
+
+			File config = new File(propertiesFile);
+			lastConfigurationModification = config.lastModified();
 		}
 	}
 
-	public void updateTokens(String accessToken, String refreshToken) {
+	public void updateTokens(String accessToken, String refreshToken) throws IOException {
 		HashMap<String, Object> newTokens = new HashMap<String, Object>();
 		newTokens.put(ACCESS_TOKEN, accessToken);
 		newTokens.put(REFRESH_TOKEN, refreshToken);
 		updateConfiguration(newTokens);
 	}
 
-	public void updateVin(String vin, String id_s, String displayName) {
+	public void updateVin(String vin, String id_s, String displayName) throws IOException {
 		HashMap<String, Object> newTokens = new HashMap<String, Object>();
 		newTokens.put(VIN, vin);
 		newTokens.put(ID_S, id_s);
 		newTokens.put(DISPLAY_NAME, displayName);
 		updateConfiguration(newTokens);
 	}
-	
-	public void updateHomeLocation(double latitude, double longitude) {
+
+	public void updateHomeLocation(double latitude, double longitude) throws IOException {
 		HashMap<String, Object> newTokens = new HashMap<String, Object>();
 		newTokens.put(HOME_LATITUDE, latitude);
 		newTokens.put(HOME_LONGITUDE, longitude);
