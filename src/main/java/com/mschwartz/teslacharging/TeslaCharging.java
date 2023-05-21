@@ -89,6 +89,7 @@ public class TeslaCharging {
 		TeslaConfiguration teslaConfiguration = new TeslaConfiguration(
 				ns.getString("propertyfile") != null ? ns.getString("propertyfile") : "app.properties");
 		TeslaAuth teslaAuth = new TeslaAuth(restRequest, teslaConfiguration);
+
 		AuthRestRequest authRestRequest = new AuthRestRequest(restRequest, teslaAuth);
 
 		TeslaVehicle teslaVehicle = new TeslaVehicle(authRestRequest, teslaConfiguration);

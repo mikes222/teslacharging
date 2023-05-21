@@ -133,6 +133,9 @@ public class WebRequest {
 			} catch (IOException e) {
 				if (e.getMessage().contains("401"))
 					throw new AuthenticationException(e);
+				else if (e.getMessage().contains("408"))
+					// seems the tesla is sleeping
+					throw new SleepingCarException(e);
 				throw e;
 			}
 

@@ -2,9 +2,14 @@ package com.mschwartz.teslacharging.web;
 
 import java.util.Map;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import com.mschwartz.teslacharging.tesla.TeslaAuth;
 
 public class AuthRestRequest {
+
+	static final Logger logger = LogManager.getLogger(AuthRestRequest.class);
 
 	private RestRequest restRequest;
 
@@ -44,4 +49,5 @@ public class AuthRestRequest {
 			return restRequest.postJson(postURL, body, clazz);
 		}
 	}
+
 }

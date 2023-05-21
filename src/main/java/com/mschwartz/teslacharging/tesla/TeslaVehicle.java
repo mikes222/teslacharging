@@ -7,6 +7,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import com.mschwartz.teslacharging.web.AuthRestRequest;
+import com.mschwartz.teslacharging.web.SleepingCarException;
 
 import lombok.Getter;
 
@@ -125,13 +126,29 @@ public class TeslaVehicle {
 		if (timestampCache != 0 && System.currentTimeMillis() - timestampCache < 10000) {
 			return lastCache.getResponse();
 		}
-		VehicleData vehicleDataResponse = authRestRequest
-				.getJSON(TeslaConfiguration.apiBase + "/api/1/vehicles/" + id + "/vehicle_data", VehicleData.class);
+		try {
+			VehicleData vehicleDataResponse = authRestRequest
+					.getJSON(TeslaConfiguration.apiBase + "/api/1/vehicles/" + id + "/vehicle_data", VehicleData.class);
 
-		if (vehicleDataResponse != null && vehicleDataResponse.getResponse() != null) {
-			lastCache = vehicleDataResponse;
-			timestampCache = System.currentTimeMillis();
-			return vehicleDataResponse.getResponse();
+			if (vehicleDataResponse != null && vehicleDataResponse.getResponse() != null) {
+				lastCache = vehicleDataResponse;
+				timestampCache = System.currentTimeMillis();
+				return vehicleDataResponse.getResponse();
+			}
+		} catch (SleepingCarException e) {
+			boolean ok = wakeUpVehicle();
+			if (!ok) {
+				logger.warn("Waking up the car failed");
+			}
+			// repeat once
+			VehicleData vehicleDataResponse = authRestRequest
+					.getJSON(TeslaConfiguration.apiBase + "/api/1/vehicles/" + id + "/vehicle_data", VehicleData.class);
+
+			if (vehicleDataResponse != null && vehicleDataResponse.getResponse() != null) {
+				lastCache = vehicleDataResponse;
+				timestampCache = System.currentTimeMillis();
+				return vehicleDataResponse.getResponse();
+			}
 		}
 
 		return null;
@@ -294,7 +311,7 @@ public class TeslaVehicle {
 	/////////////////////////////////////////////////////////////////////////
 
 	@Getter
-	class Vehicle {
+	public class Vehicle {
 
 		String id;
 
@@ -571,7 +588,7 @@ public class TeslaVehicle {
 	/////////////////////////////////////////////////////////////////////////
 
 	@Getter
-	class VehicleData {
+	public class VehicleData {
 
 		Vehicle response;
 

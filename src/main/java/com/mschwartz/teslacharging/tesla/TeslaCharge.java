@@ -132,6 +132,12 @@ public class TeslaCharge {
 
 	}
 
+	/**
+	 * 
+	 * @param chargingAmps
+	 * @return <code>null</code> if the call was successful or the reason why the call failed
+	 * @throws Exception
+	 */
 	public String setChargingAmps(int chargingAmps) throws Exception {
 		String apiEndpoint = TeslaConfiguration.apiBase + "/api/1/vehicles/" + teslaVehicle.getId()
 				+ "/command/set_charging_amps";

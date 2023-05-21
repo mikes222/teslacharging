@@ -21,7 +21,7 @@ public class ChargeCalculation {
 	 * consumed power of the house. If this value is positive we are currently
 	 * producing more power than needed.
 	 * 
-	 * @param powerConsumed
+	 * @param powerSurplus, positive values indicate that we are producing more power than needed
 	 * @throws Exception
 	 */
 	public int adaptCharging(ChargeState chargeState, int powerSurplus) throws Exception {
@@ -47,9 +47,15 @@ public class ChargeCalculation {
 		int amps = (powerSurplusWoCar / power1Amp);
 		if (amps != chargeState.getCharger_actual_current() || !chargeState.getCharging_state().equals("Charging")) {
 			logger.info("We will charge with " + amps + " amps");
-			teslaCharge.setChargingAmps(amps);
+			String reason = teslaCharge.setChargingAmps(amps);
+			if (reason != null) {
+				System.out.println("Set charging amps to " + amps + " amps failed. Reason: " +  reason);
+			}
 			if (chargeState.getCharging_state().equals("Stopped")) {
-				teslaCharge.startCharging();
+				reason = teslaCharge.startCharging();
+				if (reason != null) {
+					System.out.println("Start charging failed. Reason: " +  reason);
+				}
 			}
 		} else {
 			logger.info("No change needed");
@@ -59,7 +65,10 @@ public class ChargeCalculation {
 
 	public void stopCharging(ChargeState chargeState) throws Exception {
 		if (chargeState.getCharging_state().equals("Charging")) {
-			teslaCharge.stopCharging();
+			String reason = teslaCharge.stopCharging();
+			if (reason != null) {
+				System.out.println("stop charging failed. Reason: " +  reason);
+			}
 		}
 	}
 
