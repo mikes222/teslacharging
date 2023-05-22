@@ -38,8 +38,8 @@ public class ChargeCalculation {
 			stopCharging(chargeState);
 			return 0;
 		}
-		if (powerSurplusWoCar - 4 * power1Amp <= 0) {
-			// if we are negative when charging with at least 4 amp we should also stop
+		if (powerSurplusWoCar - 3.5 * power1Amp <= 0) {
+			// if we are negative when charging with at least 4 amp we should also stop (allow little margin)
 			logger.info("Producing too less power to charge the car with at least 4 amps");
 			stopCharging(chargeState);
 			return 0;
@@ -82,7 +82,7 @@ public class ChargeCalculation {
 	public int calculate1AmpPower(ChargeState chargeState) {
 		if (chargeState.getCharger_phases() == 0 || chargeState.getCharger_voltage() < 100) {
 			// invalid data, calculate base on our own experience
-			return 2 * 220;
+			return 3 * 220;
 		}
 		int power = chargeState.getCharger_phases() * chargeState.getCharger_voltage();
 		return power;
