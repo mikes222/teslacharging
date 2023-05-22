@@ -70,7 +70,7 @@ public class TeslaCharging {
 				.help("Sets the charging limit");
 		parser.addArgument("-m", "--chargingamps").type(Integer.class).choices(new RangeArgumentChoice<Integer>(3, 32))
 				.help("Sets the charging amps");
-		parser.addArgument("-s", "--chargestate").choices("get").type(String.class).help("Gets the charge state");
+		parser.addArgument("-i", "--info").choices("charge").type(String.class).help("Gets the charge state");
 		parser.addArgument("-g", "--chargecalculation").type(Integer.class)
 				.help("Calculates the charging amps based on the given power surplus in watts");
 		parser.addArgument("-f", "--propertyfile").type(String.class)
@@ -169,7 +169,7 @@ public class TeslaCharging {
 			} else {
 				System.out.println("Setting charging amps successful");
 			}
-		} else if (ns.getString("chargestate") != null && ns.getString("chargestate").equalsIgnoreCase("get")) {
+		} else if (ns.getString("info") != null && ns.getString("info").equalsIgnoreCase("charge")) {
 			ChargeState result = teslaVehicle.getVehicleChargeState();
 			if (result != null) {
 				System.out.println(result);

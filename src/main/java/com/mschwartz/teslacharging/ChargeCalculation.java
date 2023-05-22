@@ -21,7 +21,8 @@ public class ChargeCalculation {
 	 * consumed power of the house. If this value is positive we are currently
 	 * producing more power than needed.
 	 * 
-	 * @param powerSurplus, positive values indicate that we are producing more power than needed
+	 * @param powerSurplus, positive values indicate that we are producing more
+	 *                      power than needed
 	 * @throws Exception
 	 */
 	public int adaptCharging(ChargeState chargeState, int powerSurplus) throws Exception {
@@ -39,22 +40,27 @@ public class ChargeCalculation {
 			return 0;
 		}
 		if (powerSurplusWoCar - 3.5 * power1Amp <= 0) {
-			// if we are negative when charging with at least 4 amp we should also stop (allow little margin)
+			// if we are negative when charging with at least 4 amp we should also stop
+			// (allow little margin)
 			logger.info("Producing too less power to charge the car with at least 4 amps");
 			stopCharging(chargeState);
 			return 0;
 		}
 		int amps = (powerSurplusWoCar / power1Amp);
+		if (amps > 32) {
+			logger.info("Too much power available, tesla can only handle 32 amps in api, restrict to 32");
+			amps = 32;
+		}
 		if (amps != chargeState.getCharger_actual_current() || !chargeState.getCharging_state().equals("Charging")) {
 			logger.info("We will charge with " + amps + " amps");
 			String reason = teslaCharge.setChargingAmps(amps);
 			if (reason != null) {
-				System.out.println("Set charging amps to " + amps + " amps failed. Reason: " +  reason);
+				System.out.println("Set charging amps to " + amps + " amps failed. Reason: " + reason);
 			}
 			if (chargeState.getCharging_state().equals("Stopped")) {
 				reason = teslaCharge.startCharging();
 				if (reason != null) {
-					System.out.println("Start charging failed. Reason: " +  reason);
+					System.out.println("Start charging failed. Reason: " + reason);
 				}
 			}
 		} else {
@@ -67,7 +73,7 @@ public class ChargeCalculation {
 		if (chargeState.getCharging_state().equals("Charging")) {
 			String reason = teslaCharge.stopCharging();
 			if (reason != null) {
-				System.out.println("stop charging failed. Reason: " +  reason);
+				System.out.println("stop charging failed. Reason: " + reason);
 			}
 		}
 	}
@@ -84,7 +90,8 @@ public class ChargeCalculation {
 			// invalid data, calculate base on our own experience
 			return 3 * 220;
 		}
-		int power = chargeState.getCharger_phases() * chargeState.getCharger_voltage();
+		// the onboard charger itself has only 2 phases but the wallcharger uses 3.
+		int power = /* chargeState.getCharger_phases() */ 3 * chargeState.getCharger_voltage();
 		return power;
 	}
 
@@ -95,8 +102,7 @@ public class ChargeCalculation {
 	 * @return
 	 */
 	public int calculateCurrentPowerToCar(ChargeState chargeState) {
-		int power = chargeState.getCharger_phases() * chargeState.getCharger_voltage()
-				* chargeState.getCharger_actual_current();
+		int power = calculate1AmpPower(chargeState) * chargeState.getCharger_actual_current();
 		return power;
 	}
 }
