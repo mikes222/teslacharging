@@ -6,6 +6,28 @@ import org.apache.logging.log4j.Logger;
 import com.mschwartz.teslacharging.tesla.TeslaCharge;
 import com.mschwartz.teslacharging.tesla.TeslaVehicle.ChargeState;
 
+/**
+ * Changes the charging speed/status of the car depending on the currently
+ * consumed power. It calculates the new charging speed based on this value. 
+ * The tesla API will be used to stop/start charging or set the charging amps 
+ * accordingly. Note that the amps will be set between 4 and 32. 4 amps works 
+ * without problems though the original tesla app does not allow below 5 amps. 
+ * Note that efficiency drops with low amp values so whereas technically even 
+ * 1 amp is possible we decided to limit to 4.
+ * 
+ * Note also that the amps are calculated based on rounded values so the system
+ * may consume a little bit of power from the grid (or sends a little bit of power 
+ * back to grid) depending on the rounded value. 1 amp is approx 700 Watts. 
+ * 
+ * We recommend to call this program not more often than every 5-15 minutes. We do not 
+ * know if there is any side effect if the charging speed is constantly changing. 
+ * 
+ *  Note that the program needs to be checked for 1-phase Systems as well as for 110V
+ *  systems. It is currently to my knowledge only tested for 3-phase 220V installations.
+ * 
+ * @author Mike
+ *
+ */
 public class ChargeCalculation {
 
 	static final Logger logger = LogManager.getLogger(ChargeCalculation.class);
@@ -46,7 +68,7 @@ public class ChargeCalculation {
 			stopCharging(chargeState);
 			return 0;
 		}
-		int amps = (powerSurplusWoCar / power1Amp);
+		int amps = (int) Math.round((double) powerSurplusWoCar / power1Amp);
 		if (amps > 32) {
 			logger.info("Too much power available, tesla can only handle 32 amps in api, restrict to 32");
 			amps = 32;

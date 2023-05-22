@@ -72,7 +72,7 @@ public class TeslaCharging {
 				.help("Sets the charging amps");
 		parser.addArgument("-i", "--info").choices("charge").type(String.class).help("Gets the charge state");
 		parser.addArgument("-g", "--chargecalculation").type(Integer.class)
-				.help("Calculates the charging amps based on the given power surplus in watts");
+				.help("Calculates the charging amps based on the given power surplus in watts. Do not call it more often than every 5-15 minutes");
 		parser.addArgument("-f", "--propertyfile").type(String.class)
 				.help("name and location of the propertyfile. Default is app.properties");
 		parser.addArgument("-w", "--wakeup").type(String.class).help("Wakeup a sleeping tesla");
