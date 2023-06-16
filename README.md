@@ -1,23 +1,27 @@
-This app provides an easy way to control the charging features of your tesla. It is intended to being used in a smart home. 
+This app provides an easy way to control the charging features of your tesla. It is intended to being used in a smart home or via commandline. 
 
 ## Features
 
-Start and stop charging
+ - Start and stop charging
 
-Set the charging amps
+ - Set the charging amps
 
-Sets the charging limit in percent
+ - Set the charging limit in percent
 
-Retrieve the charging info from the car
+ - Retrieve charging infos from the car
 
-Opens/closes the chargeport
+ - Open/close the chargeport
 
-Set the charging limit in percent
+ - Set the charging limit in percent
 
-Wake the car up
+ - Wake the car up
 
-Automatically calculates the recommended charging amps based on the given power currently sent to the grid (positive values)/bought from the grid (negative values). 
-The superflous power will be calculated to charge the car. Power already used to charge the car will be taken into account. 
+ - Automatically calculates the recommended charging amps based on the given power currently sent to the grid (positive values) or bought from the grid (negative values). 
+The superflous power will be used to charge the car. Power already used to charge the car will be taken into account. 
+
+This is how it looks like (The car has been charged from 09:30 to 2pm. Note how the load - the black line - follows the production - the yellow area):
+
+![Charging curve](resources/chargecurve.PNG)
 
 ## Compilation
 
@@ -63,15 +67,15 @@ Feel free to enhance the program as needed and create PullRequests so that other
 
 **Source inspired by**
 
-https://github.com/rrarey02/TeslaRTPCharging
+[https://github.com/rrarey02/TeslaRTPCharging](https://github.com/rrarey02/TeslaRTPCharging)
 
 **Tesla API documentation (unofficial):**
 
-https://tesla-api.timdorr.com/
+[https://tesla-api.timdorr.com](https://tesla-api.timdorr.com)
 
 If you want to check out python and different usecases for tesla you may want to visit
 
-https://github.com/strmotors/TeslaReport
+[https://github.com/strmotors/TeslaReport](https://github.com/strmotors/TeslaReport)
 
 
 ## Disclaimer
