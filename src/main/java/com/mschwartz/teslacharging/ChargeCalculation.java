@@ -31,6 +31,8 @@ import com.mschwartz.teslacharging.tesla.TeslaVehicle.ChargeState;
 public class ChargeCalculation {
 
 	static final Logger logger = LogManager.getLogger(ChargeCalculation.class);
+	
+	final int minAmps = 1;
 
 	private TeslaCharge teslaCharge;
 
@@ -53,7 +55,7 @@ public class ChargeCalculation {
 		int powerSurplusWoCar = powerSurplus + powerOfCar;
 		int power1Amp = calculate1AmpPower(chargeState);
 		logger.info("The car consumes currently " + powerOfCar + " watts. We have a surplus of " + powerSurplusWoCar
-				+ " watts (w/o car), we need at least " + (power1Amp * 4) + "watts.");
+				+ " watts (w/o car).");
 		logger.debug("w/o car: " + powerSurplusWoCar + ", 1amp: " + power1Amp);
 		if (powerSurplusWoCar <= 0) {
 			// if negative we should stop charging
@@ -61,10 +63,10 @@ public class ChargeCalculation {
 			stopCharging(chargeState);
 			return 0;
 		}
-		if (powerSurplusWoCar - 3.5 * power1Amp <= 0) {
-			// if we are negative when charging with at least 4 amp we should also stop
+		if (powerSurplusWoCar - (minAmps - 0.5) * power1Amp <= 0) {
+			// if we are negative when charging with at least 1 amp we should also stop
 			// (allow little margin)
-			logger.info("Producing too less power to charge the car with at least 4 amps");
+			logger.info("Producing too less power to charge the car with at least " + minAmps + " amps");
 			stopCharging(chargeState);
 			return 0;
 		}
@@ -74,7 +76,7 @@ public class ChargeCalculation {
 			amps = 32;
 		}
 		if (amps != chargeState.getCharger_actual_current() || !chargeState.getCharging_state().equals("Charging")) {
-			logger.info("We will charge with " + amps + " amps");
+			logger.info("Charging with " + amps + " amps");
 			String reason = teslaCharge.setChargingAmps(amps);
 			if (reason != null) {
 				System.out.println("Set charging amps to " + amps + " amps failed. Reason: " + reason);
