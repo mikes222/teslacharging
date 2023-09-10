@@ -80,17 +80,20 @@ public class ChargeCalculation {
 			String reason = teslaCharge.setChargingAmps(amps);
 			if (reason != null) {
 				System.out.println("Set charging amps to " + amps + " amps failed. Reason: " + reason);
+				return 0;
 			}
 			if (chargeState.getCharging_state().equals("Stopped")) {
 				reason = teslaCharge.startCharging();
 				if (reason != null) {
 					System.out.println("Start charging failed. Reason: " + reason);
+					return 0;
 				}
 			}
+			return amps * power1Amp;
 		} else {
 			logger.info("No change needed");
+			return 0;
 		}
-		return amps * power1Amp;
 	}
 
 	public void stopCharging(ChargeState chargeState) throws Exception {

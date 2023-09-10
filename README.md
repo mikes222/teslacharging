@@ -31,13 +31,22 @@ As usual for java download *JDK* and *maven* and compile the code with
     
 Grab the .jar file in the *target/* directory.
 
+Alternatively you can download the teslacharging.jar file directly from the resources directoy. 
+
 ## Usage
 
 Start the application with 
 
 	java -jar teslacharging.jar -h
 	
-A short helpfile will be displayed
+A short helpfile will be displayed. 
+
+	java -jar teslacharging.jar --propertyfile /media/usb0/app.properties --chargecalculation 5000
+	
+Changes the charging settings of your tesla so that an additional 5000 Watts are charged on top of the current charging.
+
+Charging can vary between 1 amps and 32 amps. Note however that even when setting to 1 amps your tesla may consume more than one amp. 
+On the other side 32 amps is not always supported. Sometimes 16 amps are the maximum consumable power although the software allows up to 32 amps.
 
 ## Setup
 
