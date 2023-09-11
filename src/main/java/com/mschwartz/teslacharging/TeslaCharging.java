@@ -16,8 +16,6 @@
 
 package com.mschwartz.teslacharging;
 
-import java.util.Map;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
@@ -25,9 +23,10 @@ import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 
 import com.mschwartz.teslacharging.tesla.TeslaAuth;
-import com.mschwartz.teslacharging.tesla.TeslaAuth.TokenResponse;
 import com.mschwartz.teslacharging.tesla.TeslaCharge;
 import com.mschwartz.teslacharging.tesla.TeslaConfiguration;
+import com.mschwartz.teslacharging.tesla.TeslaCreateAuth;
+import com.mschwartz.teslacharging.tesla.TeslaCreateAuth.TokenResponse;
 import com.mschwartz.teslacharging.tesla.TeslaVehicle;
 import com.mschwartz.teslacharging.tesla.TeslaVehicle.ChargeState;
 import com.mschwartz.teslacharging.tesla.TeslaVehicle.DriveState;
@@ -71,8 +70,8 @@ public class TeslaCharging {
 		parser.addArgument("-m", "--chargingamps").type(Integer.class).choices(new RangeArgumentChoice<Integer>(3, 32))
 				.help("Sets the charging amps");
 		parser.addArgument("-i", "--info").choices("charge").type(String.class).help("Gets the charge state");
-		parser.addArgument("-g", "--chargecalculation").type(Integer.class)
-				.help("Calculates the charging amps based on the given power surplus in watts. Do not call it more often than every 5-15 minutes");
+		parser.addArgument("-g", "--chargecalculation").type(Integer.class).help(
+				"Calculates the charging amps based on the given power surplus in watts. Do not call it more often than every 5-15 minutes");
 		parser.addArgument("-f", "--propertyfile").type(String.class)
 				.help("name and location of the propertyfile. Default is app.properties");
 		parser.addArgument("-w", "--wakeup").type(String.class).help("Wakeup a sleeping tesla");
@@ -88,38 +87,56 @@ public class TeslaCharging {
 		RestRequest restRequest = new RestRequest();
 		TeslaConfiguration teslaConfiguration = new TeslaConfiguration(
 				ns.getString("propertyfile") != null ? ns.getString("propertyfile") : "app.properties");
-		TeslaAuth teslaAuth = new TeslaAuth(restRequest, teslaConfiguration);
 
-		AuthRestRequest authRestRequest = new AuthRestRequest(restRequest, teslaAuth);
-
-		TeslaVehicle teslaVehicle = new TeslaVehicle(authRestRequest, teslaConfiguration);
-		TeslaCharge teslaCharge = new TeslaCharge(authRestRequest, teslaVehicle, teslaConfiguration);
+		try {
+			TeslaAuth teslaAuth = new TeslaAuth(restRequest, teslaConfiguration);
+		} catch (RuntimeException e) {
+			// set all possible keys and store the otherwise empty file
+			teslaConfiguration.updateTokens("", "");
+			teslaConfiguration.updateVin("", "", "");
+			teslaConfiguration.updateHomeLocation(null, null);
+		}
 
 		if (ns.getString("auth") != null && ns.getString("auth").equalsIgnoreCase("step1")) {
-			teslaAuth.createVerifier();
-			String url = teslaAuth.prepareAuthUrl(null);
+			TeslaCreateAuth teslaCreateAuth = new TeslaCreateAuth(restRequest);
+			teslaCreateAuth.createVerifier();
+			String url = teslaCreateAuth.prepareAuthUrl(null);
 
 			System.out.println(
 					"Copy the following URL to your browser, and enter your tesla credentials. When the browser responds with 'Page Not Found' copy the parameter code from the URL and start step 2 of the authentication process\n");
 			System.out.println(url);
 			System.out.println("\n" + "java -jar teslacharging.jar --auth step2 --verifier "
-					+ teslaAuth.getCodeVerifier() + " --code <code>");
+					+ teslaCreateAuth.getCodeVerifier() + " --code <code>");
 			return;
 		} else if (ns.getString("auth") != null && ns.getString("auth").equalsIgnoreCase("step2")) {
-			teslaAuth.setCodeVerifier(ns.getString("verifier"));
-			TokenResponse response = teslaAuth.retrieveTokens(ns.getString("code"));
+			TeslaCreateAuth teslaCreateAuth = new TeslaCreateAuth(restRequest);
+			teslaCreateAuth.setCodeVerifier(ns.getString("verifier"));
+			TokenResponse response = teslaCreateAuth.retrieveTokens(ns.getString("code"));
 			teslaConfiguration.updateTokens(response.access_token, response.refresh_token);
 			System.out.println("Congratulations. The tokens are now stored for future use");
-		} else if (ns.getString("auth") != null && ns.getString("auth").equalsIgnoreCase("all")) {
-			String email = "tesla@mschwartz.eu";
+			return;
+//		} else if (ns.getString("auth") != null && ns.getString("auth").equalsIgnoreCase("all")) {
+//			TeslaCreateAuth teslaCreateAuth = new TeslaCreateAuth(restRequest);
+//			String email = "tesla@mschwartz.eu";
+//			String pw = "abc";
+//
+//			teslaCreateAuth.createVerifier();
+//			Map<String, String> params = teslaCreateAuth.authorize(email);
+//			for (Map.Entry<String, String> entry : params.entrySet()) {
+//				System.out.println("val: " + entry.getKey() + " = " + entry.getValue());
+//			}
+//			teslaCreateAuth.postAuthorize(email, pw, params);
+//			return;
+		}
 
-			teslaAuth.createVerifier();
-			Map<String, String> params = teslaAuth.authorize(email);
-			for (Map.Entry<String, String> entry : params.entrySet()) {
-				System.out.println("val: " + entry.getKey() + " = " + entry.getValue());
-			}
-			teslaAuth.postAuthorize(email, "pIEbGg9x73wuDOZCAVqn", params);
-		} else if (ns.getString("charge") != null && ns.getString("charge").equalsIgnoreCase("start")) {
+		TeslaAuth teslaAuth = new TeslaAuth(restRequest, teslaConfiguration);
+		teslaAuth = new TeslaAuth(restRequest, teslaConfiguration);
+		AuthRestRequest authRestRequest = new AuthRestRequest(restRequest, teslaAuth);
+
+		TeslaVehicle teslaVehicle = new TeslaVehicle(authRestRequest, teslaConfiguration);
+		TeslaCharge teslaCharge = new TeslaCharge(authRestRequest, teslaVehicle, teslaConfiguration);
+
+		if (ns.getString("charge") != null && ns.getString("charge").equalsIgnoreCase("start")) {
 			String result = teslaCharge.startCharging();
 			if (result != null) {
 				System.out.println("Start charging failed. Reason: " + result);
@@ -178,11 +195,11 @@ public class TeslaCharging {
 				System.exit(1);
 			}
 		} else if (ns.getString("chargecalculation") != null) {
-			
+
 			DriveState driveState = teslaVehicle.getVehicleDriveState();
-			if (driveState != null && driveState.getLatitude() != null
-					&& driveState.getLongitude() != null) {
-				double distance = teslaVehicle.getHomePosition().distanceFrom(driveState.getLatitude(), driveState.getLongitude());
+			if (driveState != null && driveState.getLatitude() != null && driveState.getLongitude() != null) {
+				double distance = teslaVehicle.getHomePosition().distanceFrom(driveState.getLatitude(),
+						driveState.getLongitude());
 				if (distance > 5) {
 					System.out.println("Car is more than 5 miles away from home.");
 					System.exit(1);
@@ -191,7 +208,7 @@ public class TeslaCharging {
 				System.out.println("getting drive state failed");
 				System.exit(1);
 			}
-		
+
 			ChargeState chargeState = teslaVehicle.getVehicleChargeState();
 			if (chargeState != null) {
 				if (chargeState.getCharging_state().equals("Disconnected")) {

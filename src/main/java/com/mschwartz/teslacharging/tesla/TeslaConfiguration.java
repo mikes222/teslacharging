@@ -54,21 +54,35 @@ public class TeslaConfiguration {
 		logger.debug("Update configuration with {}", new JSONObject(configChanges).toString());
 		ArrayList<String> newLines = new ArrayList<String>();
 		Scanner scanner;
-		scanner = new Scanner(new File(propertiesFile));
-		while (scanner.hasNextLine()) {
-			String line = scanner.nextLine().trim();
-			if (line.indexOf("=") > 0) {
-				String[] parts = line.split("=", 2);
-				String key = parts[0];
-				String value = parts[1];
-				if (configChanges.containsKey(key)) {
-					value = configChanges.get(key).toString();
+		File file = new File(propertiesFile);
+		if (file.exists()) {
+			scanner = new Scanner(file);
+			while (scanner.hasNextLine()) {
+				String line = scanner.nextLine().trim();
+				if (line.indexOf("=") > 0) {
+					String[] parts = line.split("=", 2);
+					String key = parts[0];
+					String value = parts[1];
+					if (configChanges.containsKey(key)) {
+						value = configChanges.get(key).toString();
+						configChanges.remove(key);
+					}
+					line = key + "=" + value;
 				}
-				line = key + "=" + value;
+				newLines.add(line);
 			}
-			newLines.add(line);
+			scanner.close();
 		}
-		scanner.close();
+
+		for (HashMap.Entry<String, Object> entry : configChanges.entrySet()) {
+			Object v = entry.getValue();
+			String value;
+			if (v != null)
+				value = v.toString();
+			else 
+				value = "";
+			newLines.add(entry.getKey() + "=" + value);
+		}
 
 		if (newLines.size() > 0) {
 			BufferedWriter writer = new BufferedWriter(new FileWriter(propertiesFile));
@@ -97,7 +111,7 @@ public class TeslaConfiguration {
 		updateConfiguration(newTokens);
 	}
 
-	public void updateHomeLocation(double latitude, double longitude) throws IOException {
+	public void updateHomeLocation(Double latitude, Double longitude) throws IOException {
 		HashMap<String, Object> newTokens = new HashMap<String, Object>();
 		newTokens.put(HOME_LATITUDE, latitude);
 		newTokens.put(HOME_LONGITUDE, longitude);
@@ -123,8 +137,8 @@ public class TeslaConfiguration {
 		try (FileInputStream fis = new FileInputStream(propertiesFile)) {
 			prop.load(fis);
 		} catch (FileNotFoundException ex) {
-			logger.fatal(propertiesFile + " not found in current directory, Exiting.");
-			System.exit(1);
+			logger.fatal(propertiesFile + " not found in current directory.");
+			throw new RuntimeException();
 		} catch (IOException ex) {
 			logger.fatal(propertiesFile + " could not be read, Exiting.");
 			System.exit(1);
