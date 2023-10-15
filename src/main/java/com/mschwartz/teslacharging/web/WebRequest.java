@@ -244,7 +244,16 @@ public class WebRequest {
 //				}
 //			}
 
-			ir = new InputStreamReader(conn.getInputStream(), "UTF-8");
+			try {
+				ir = new InputStreamReader(conn.getInputStream(), "UTF-8");
+			} catch (IOException e) {
+				if (e.getMessage().contains("401"))
+					throw new AuthenticationException(e);
+				else if (e.getMessage().contains("408"))
+					// seems the tesla is sleeping
+					throw new SleepingCarException(e);
+				throw e;
+			}
 
 			if (ir != null) {
 				char[] buffer = new char[1024 * 4];

@@ -113,7 +113,7 @@ public class ChargeCalculation {
 	 * @return
 	 */
 	public int calculate1AmpPower(ChargeState chargeState) {
-		if (chargeState.getCharger_phases() == 0 || chargeState.getCharger_voltage() < 100) {
+		if (chargeState.getCharger_phases() == null || chargeState.getCharger_phases() == 0 || chargeState.getCharger_voltage() < 100) {
 			// invalid data, calculate base on our own experience
 			return 3 * 220;
 		}
