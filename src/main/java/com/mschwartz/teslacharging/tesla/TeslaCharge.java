@@ -5,6 +5,7 @@ import org.apache.logging.log4j.Logger;
 
 import com.mschwartz.teslacharging.tesla.TeslaVehicle.ChargeState;
 import com.mschwartz.teslacharging.web.AuthRestRequest;
+import com.mschwartz.teslacharging.web.SleepingCarException;
 
 import lombok.Getter;
 
@@ -54,14 +55,30 @@ public class TeslaCharge {
 	private String sendChargeCommand(String chargeCommand) throws Exception {
 		String apiEndpoint = TeslaConfiguration.apiBase + "/api/1/vehicles/" + teslaVehicle.getId() + "/command/charge_"
 				+ chargeCommand;
-		SimpleResult simpleResult = authRestRequest.postJson(apiEndpoint, null, SimpleResult.class);
-		if (simpleResult == null || simpleResult.getResponse() == null)
-			return "unknown";
-		if (simpleResult.getResponse().isResult()) {
-			return null;
-		}
+		try {
+			SimpleResult simpleResult = authRestRequest.postJson(apiEndpoint, null, SimpleResult.class);
+			if (simpleResult == null || simpleResult.getResponse() == null)
+				return "unknown";
+			if (simpleResult.getResponse().isResult()) {
+				return null;
+			}
 
-		return simpleResult.getResponse().getReason();
+			return simpleResult.getResponse().getReason();
+		} catch (SleepingCarException e) {
+			boolean ok = teslaVehicle.wakeUpVehicle();
+			if (!ok) {
+				logger.warn("Waking up the car failed");
+			}
+			// repeat once
+			SimpleResult simpleResult = authRestRequest.postJson(apiEndpoint, null, SimpleResult.class);
+			if (simpleResult == null || simpleResult.getResponse() == null)
+				return "unknown";
+			if (simpleResult.getResponse().isResult()) {
+				return null;
+			}
+
+			return simpleResult.getResponse().getReason();
+		}
 	}
 
 	/**
@@ -135,21 +152,39 @@ public class TeslaCharge {
 	/**
 	 * 
 	 * @param chargingAmps
-	 * @return <code>null</code> if the call was successful or the reason why the call failed
+	 * @return <code>null</code> if the call was successful or the reason why the
+	 *         call failed
 	 * @throws Exception
 	 */
 	public String setChargingAmps(int chargingAmps) throws Exception {
 		String apiEndpoint = TeslaConfiguration.apiBase + "/api/1/vehicles/" + teslaVehicle.getId()
 				+ "/command/set_charging_amps";
-		ChargingAmpsValue percentValue = new ChargingAmpsValue(chargingAmps);
-		SimpleResult simpleResult = authRestRequest.postJson(apiEndpoint, percentValue, SimpleResult.class);
-		if (simpleResult == null || simpleResult.getResponse() == null)
-			return "unknown";
-		if (simpleResult.getResponse().isResult()) {
-			return null;
-		}
+		try {
+			ChargingAmpsValue percentValue = new ChargingAmpsValue(chargingAmps);
+			SimpleResult simpleResult = authRestRequest.postJson(apiEndpoint, percentValue, SimpleResult.class);
+			if (simpleResult == null || simpleResult.getResponse() == null)
+				return "unknown";
+			if (simpleResult.getResponse().isResult()) {
+				return null;
+			}
 
-		return simpleResult.getResponse().getReason();
+			return simpleResult.getResponse().getReason();
+		} catch (SleepingCarException e) {
+			boolean ok = teslaVehicle.wakeUpVehicle();
+			if (!ok) {
+				logger.warn("Waking up the car failed");
+			}
+			// repeat once
+			ChargingAmpsValue percentValue = new ChargingAmpsValue(chargingAmps);
+			SimpleResult simpleResult = authRestRequest.postJson(apiEndpoint, percentValue, SimpleResult.class);
+			if (simpleResult == null || simpleResult.getResponse() == null)
+				return "unknown";
+			if (simpleResult.getResponse().isResult()) {
+				return null;
+			}
+
+			return simpleResult.getResponse().getReason();
+		}
 
 	}
 

@@ -161,16 +161,19 @@ public class TeslaVehicle {
 	 * @throws Exception
 	 */
 	public boolean wakeUpVehicle() throws Exception {
-		logger.debug("Wake up, Tesla {}!", id);
-		VehicleData wakeResponse = authRestRequest
-				.postJson(TeslaConfiguration.apiBase + "/api/1/vehicles/" + id + "/wake_up", null, VehicleData.class);
-		if (wakeResponse != null) {
-			if (wakeResponse.getResponse() != null) {
-				Vehicle response = wakeResponse.getResponse();
-				if (response.getState() != null && response.getState().equals("online")) {
-					return true;
+		for (int i = 0; i < 5; ++i) {
+			logger.debug("Wake up, Tesla {}!", id);
+			VehicleData wakeResponse = authRestRequest.postJson(
+					TeslaConfiguration.apiBase + "/api/1/vehicles/" + id + "/wake_up", null, VehicleData.class);
+			if (wakeResponse != null) {
+				if (wakeResponse.getResponse() != null) {
+					Vehicle response = wakeResponse.getResponse();
+					if (response.getState() != null && response.getState().equals("online")) {
+						return true;
+					}
 				}
 			}
+			Thread.sleep(1000);
 		}
 		return false;
 	}
