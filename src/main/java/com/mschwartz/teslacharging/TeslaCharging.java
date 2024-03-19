@@ -16,6 +16,8 @@
 
 package com.mschwartz.teslacharging;
 
+import java.text.DecimalFormat;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
@@ -200,13 +202,14 @@ public class TeslaCharging {
 			if (driveState != null && driveState.getLatitude() != null && driveState.getLongitude() != null) {
 				double distance = teslaVehicle.getHomePosition().distanceFrom(driveState.getLatitude(),
 						driveState.getLongitude());
-				if (distance > 5) {
-					System.out.println("Car is more than 5 miles away from home.");
+				if (distance > 3) {
+					DecimalFormat df = new DecimalFormat("#,###.#");
+					System.out.println("Car is " + df.format(distance) + " miles away from home.");
 					System.exit(1);
 				}
 			} else {
-				System.out.println("getting drive state failed");
-				System.exit(1);
+				System.out.println("getting drive state failed, cannot determine the position of the car");
+				//System.exit(1);
 			}
 
 			ChargeState chargeState = teslaVehicle.getVehicleChargeState();

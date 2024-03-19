@@ -161,7 +161,7 @@ public class TeslaVehicle {
 	 * @throws Exception
 	 */
 	public boolean wakeUpVehicle() throws Exception {
-		for (int i = 0; i < 5; ++i) {
+		for (int i = 0; i < 10; ++i) {
 			logger.debug("Wake up, Tesla {}!", id);
 			VehicleData wakeResponse = authRestRequest.postJson(
 					TeslaConfiguration.apiBase + "/api/1/vehicles/" + id + "/wake_up", null, VehicleData.class);
@@ -173,7 +173,7 @@ public class TeslaVehicle {
 					}
 				}
 			}
-			Thread.sleep(1000);
+			Thread.sleep(2000);
 		}
 		return false;
 	}
@@ -576,6 +576,14 @@ public class TeslaVehicle {
 		Double speed;
 
 		long timestamp;
+		
+		Double active_route_latitude;
+		
+		Double active_route_longitude;
+		
+		Double active_route_traffic_minutes_delay;
+		
+
 	}
 
 	/////////////////////////////////////////////////////////////////////////
