@@ -92,7 +92,7 @@ public class ChargeCalculation {
 			return amps * power1Amp;
 		} else {
 			logger.info("No change needed");
-			return 0;
+			return amps * power1Amp;
 		}
 	}
 
